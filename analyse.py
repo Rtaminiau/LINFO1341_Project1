@@ -3,27 +3,40 @@ import pyshark as ps
 Cap1 = ps.FileCapture("Paquets/demarrage_signal.pcapng")  # First Capture (4 messages send by CC)
 
 echangeTCP = {}
+DmnNameDNs = {}
+TypeRequestDNS = {}
+countVersionIP = {}
 countTCP = 0
 countDNS = 0
+count = 0
+countIPV6 = 0
 for pkt in Cap1:
+    count += 1
     if "tcp" in pkt:
-        
-        if (pkt.tcp.srcport, pkt.tcp.dstport) not in echangeTCP:
-            echangeTCP[(pkt.tcp.srcport, pkt.tcp.dstport)] = 1
-        else:
-            echangeTCP[(pkt.tcp.srcport, pkt.tcp.dstport)] += 1
+        echangeTCP[(pkt.tcp.srcport, pkt.tcp.dstport)] = echangeTCP.get((pkt.tcp.srcport, pkt.tcp.dstport), 0) + 1
         countTCP += 1
-
-        
-    
     if "dns" in pkt: 
         countDNS += 1
-    
+        DmnNameDNs[pkt.dns.qry_name] = DmnNameDNs.get(pkt.dns.qry_name, 0) + 1
+        TypeRequestDNS[pkt.dns.qry_type] = TypeRequestDNS.get(pkt.dns.qry_type, 0) + 1
+    if "ip" in pkt:
+        vers = pkt.ip.version
+        countVersionIP[vers] = countVersionIP.get(vers, 0) + 1
+    if "ipv6" in pkt:
+        countIPV6 +=1
 
+        
+
+    
+print( str(count) + " paquets au total")
 print("nombre de paquets TCP :" + str(countTCP))
 print("liste des échange source destination differentes : " + str(echangeTCP)) # [443, 50308, 51648, 42092, 48968]
 
 print("nombre de paquet dns : " + str(countDNS))
+print( "nom de domaine DNS : " + str(DmnNameDNs))
+print("type de requetes dns : " + str(TypeRequestDNS))
+print("compte des differentes verions IP  " + str(countVersionIP))
+print(str(countIPV6) + " acces IPV6")
 
 
 
@@ -46,4 +59,11 @@ field TCP
 '_ws_expert_group', 'flags_fin', 'flags_str', 'window_size_value', 'window_size', 'checksum', 'checksum_status', 'urgent_pointer', 
 'options', 'options_mss', 'option_kind', 'option_len', 'options_mss_val', 'options_sack_perm', 'options_timestamp', 'options_timestamp_tsval', 
 'options_timestamp_tsecr', 'options_nop', 'options_wscale', 'options_wscale_shift', 'options_wscale_multiplier', '', 'time_relative', 'time_delta']
+
+field IP
+['version', 'hdr_len', 'dsfield', 'dsfield_dscp', 'dsfield_ecn', 'len', 'id', 'flags', 'flags_rb', 'flags_df', 'flags_mf', 'frag_offset', 'ttl', 'proto', 
+'checksum', 'checksum_status', 'src', 'addr', 'src_host', 'host', 'dst', 'dst_host']
+
+field IPV6
+['version', 'ip_version', 'tclass', 'tclass_dscp', 'tclass_ecn', 'flow', 'plen', 'nxt', 'hlim', 'src', 'addr', 'src_host', 'host', 'dst', 'dst_host']
 """
